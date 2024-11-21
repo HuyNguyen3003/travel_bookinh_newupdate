@@ -1,6 +1,7 @@
-import { createClient } from '@supabase/supabase-js';
-
-const bucket = 'data_bookingtravel';
+import { createClient } from "@supabase/supabase-js";
+import fs from "fs";
+import path from "path";
+const bucket = "data_bookingtravel";
 
 // Create a single supabase client for interacting with your database
 export const supabase = createClient(
@@ -16,11 +17,28 @@ export const uploadImage = async (image: File) => {
   const { data, error } = await supabase.storage
     .from(bucket)
     .upload(newName, image, {
-      cacheControl: '3600',
+      cacheControl: "3600",
     });
 
-    console.log(error);
-    
-  if (!data) throw new Error('Image upload failed');
+  console.log(error);
+
+  if (!data) throw new Error("Image upload failed");
   return supabase.storage.from(bucket).getPublicUrl(newName).data.publicUrl;
+};
+
+export const uploadImageLocal = async (pathImage: string) => {
+  try {
+    const imageBuffer = fs.readFileSync(pathImage);
+    const fileName = path.basename(pathImage);
+    const timestamp = Date.now();
+    const newName = `${timestamp}-${fileName}`;
+
+    await supabase.storage.from(bucket).upload(newName, imageBuffer, {
+      cacheControl: "3600",
+    });
+
+    return supabase.storage.from(bucket).getPublicUrl(newName).data.publicUrl;
+  } catch (error) {
+    return "error";
+  }
 };
